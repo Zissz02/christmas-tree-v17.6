@@ -387,7 +387,7 @@
 
         function createStarGeometry(outer=0.55,inner=0.24,depth=0.16,bevel=false){
             const s=new THREE.Shape();
-            for(let i=0;i<10;i++){const r=(i%2===0)?outer:inner;const a=-Math.PI/2+i*Math.PI/5;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)s.moveTo(x,y);else s.lineTo(x,y);}
+            for(let i=0;i<10;i++){const r=(i%2===0)?outer:inner;const a=Math.PI/2+i*Math.PI/5;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)s.moveTo(x,y);else s.lineTo(x,y);}
             s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:bevel,bevelThickness:0.08,bevelSize:0.08,bevelSegments:2,steps:1});g.center();return g;
         }
         function createParticles() {
