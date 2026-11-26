@@ -352,11 +352,17 @@
 
         window.updateSnowSettings=()=> { CONFIG.snow.sizeBase=parseFloat(document.getElementById('slider-snow-size').value); CONFIG.snow.count=parseInt(document.getElementById('slider-snow-count').value); createSnow(); };
         window.updateSnowSpeed=(v)=> { CONFIG.snow.speed=parseFloat(v); };
+        function createSnowflakeGeometry(radius=0.26){
+            const shapes=[];
+            const addRect=(cx,cy,w,h,ang)=>{const s=new THREE.Shape();const ca=Math.cos(ang),sa=Math.sin(ang);const pts=[[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]];pts.forEach(([px,py],i)=>{const x=cx+px*ca-py*sa,y=cy+px*sa+py*ca;if(i===0)s.moveTo(x,y);else s.lineTo(x,y);});s.closePath();shapes.push(s);};
+            for(let i=0;i<6;i++){const a=i*Math.PI/3;addRect(Math.cos(a)*radius*0.5,Math.sin(a)*radius*0.5,radius*0.12,radius,a-Math.PI/2);[0.45,0.72].forEach(f=>addRect(Math.cos(a)*radius*f,Math.sin(a)*radius*f,radius*0.08,radius*0.34,a));}
+            const g=new THREE.ShapeGeometry(shapes);g.center();return g;
+        }
         function createSnow() {
             if(snowInstancedMesh){scene.remove(snowInstancedMesh); snowInstancedMesh.geometry.dispose(); snowInstancedMesh.material.dispose(); snowInstancedMesh=null; snowData=[];}
             if(CONFIG.snow.count<=0)return;
-            const g=new THREE.IcosahedronGeometry(CONFIG.snow.sizeBase,0);
-            const m=new THREE.MeshPhysicalMaterial({color:0xffffff,metalness:0,roughness:0.15,transmission:0.9,thickness:0.5,envMapIntensity:1.5,clearcoat:1,clearcoatRoughness:0.1,ior:1.33});
+            const g=createSnowflakeGeometry(CONFIG.snow.sizeBase*2.2);
+            const m=new THREE.MeshBasicMaterial({color:0xcfe9ff,transparent:true,opacity:0.85,side:THREE.DoubleSide,depthWrite:false});
             snowInstancedMesh=new THREE.InstancedMesh(g,m,CONFIG.snow.count); snowInstancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             for(let i=0;i<CONFIG.snow.count;i++){
                 snowDummy.position.set((Math.random()-0.5)*CONFIG.snow.range, Math.random()*CONFIG.snow.range, (Math.random()-0.5)*CONFIG.snow.range);
