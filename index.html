@@ -206,7 +206,7 @@
         function loadMusicFromDB(){if(EXPORTED_DATA && EXPORTED_DATA.music) return Promise.resolve(dataURLtoBlob(EXPORTED_DATA.music)); if(!db)return Promise.resolve(null);return new Promise(r=>{db.transaction('music',"readonly").objectStore('music').get('bgm').onsuccess=e=>r(e.target.result?e.target.result.data:null)});}
         function dataURLtoBlob(dataurl) { var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n); while(n--){ u8arr[n] = bstr.charCodeAt(n); } return new Blob([u8arr], {type:mime}); }
 
-        let scene, camera, renderer, composer, mainGroup, particleSystem=[], photoMeshGroup=new THREE.Group(), snowInstancedMesh, snowDummy=new THREE.Object3D(), snowData=[], clock=new THREE.Clock(), handLandmarker, videoElement, caneTexture, glowTexture, ringSystem, ringData=[], ringDummy=new THREE.Object3D(), bokehGroup, bokehData=[], bgmAudio=new Audio(); bgmAudio.loop=true; let isMusicPlaying=false;
+        let scene, camera, renderer, composer, mainGroup, particleSystem=[], photoMeshGroup=new THREE.Group(), snowInstancedMesh, snowDummy=new THREE.Object3D(), snowData=[], clock=new THREE.Clock(), handLandmarker, videoElement, caneTexture, glowTexture, ringSystem, ringData=[], ringDummy=new THREE.Object3D(), bokehGroup, bokehData=[], fairyLights=null, fairyProgress=0, fairyPrevMode='TREE', bgmAudio=new Audio(); bgmAudio.loop=true; let isMusicPlaying=false;
 
         async function init() {
             if (EXPORTED_DATA) {
@@ -215,7 +215,7 @@
                 setTimeout(() => applyTextConfig(EXPORTED_DATA.text.fontKey, EXPORTED_DATA.text.line1, EXPORTED_DATA.text.line2, EXPORTED_DATA.text.size, EXPORTED_DATA.text.color), 100);
             }
 
-            initThree(); setupEnvironment(); setupLights(); createTextures(); createParticles(); createDust(); createSnow(); createRings(); createBokeh(); createDefaultPhotos(); setupPostProcessing(); setupEvents(); animate();
+            initThree(); setupEnvironment(); setupLights(); createTextures(); createParticles(); createDust(); createSnow(); createRings(); createBokeh(); createFairyLights(); createDefaultPhotos(); setupPostProcessing(); setupEvents(); animate();
             
             const loader = document.getElementById('loader');
             if(loader) { loader.style.opacity = 0; setTimeout(() => loader.remove(), 500); }
@@ -393,6 +393,33 @@
             }
             scene.add(bokehGroup);
         }
+        function createFairyLights(){
+            if(fairyLights){mainGroup.remove(fairyLights.group);fairyLights.group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});}
+            const group=new THREE.Group(),h=CONFIG.particles.treeHeight,R=CONFIG.particles.treeRadius,turns=7,count=160,points=[];
+            for(let i=0;i<=count;i++){const t=i/count,r=Math.max(0.3,R*(1-t)*0.95)+0.6,a=t*turns*Math.PI*2,y=-h/2+t*h;points.push(new THREE.Vector3(Math.cos(a)*r,y,Math.sin(a)*r));}
+            const curve=new THREE.CatmullRomCurve3(points);
+            group.add(new THREE.Mesh(new THREE.TubeGeometry(curve,count*3,0.045,5,false),new THREE.MeshBasicMaterial({color:0x8a5a1a,transparent:true,opacity:0.85})));
+            const mesh=new THREE.InstancedMesh(new THREE.SphereGeometry(0.16,8,8),new THREE.MeshBasicMaterial({color:0xffffff}),count);
+            mesh.instanceMatrix.setUsage(THREE.StaticDrawUsage);
+            const dummy=new THREE.Object3D(),bulbs=[];
+            for(let i=0;i<count;i++){const t=(i+0.5)/count;dummy.position.copy(points[i]);dummy.scale.setScalar(1);dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);mesh.setColorAt(i,new THREE.Color(0x4a3410));bulbs.push({t});}
+            group.add(mesh);mainGroup.add(group);fairyLights={group,mesh,bulbs};fairyProgress=0;fairyPrevMode='TREE';
+        }
+        function updateFairyLights(dt,et){
+            if(!fairyLights)return;
+            if(STATE.mode==='TREE'){
+                if(fairyPrevMode!=='TREE')fairyProgress=0;
+                fairyPrevMode='TREE';fairyProgress=Math.min(1,fairyProgress+dt/3.2);
+            }else{fairyPrevMode=STATE.mode;fairyProgress=Math.max(0,fairyProgress-dt*1.5);}
+            const lit=new THREE.Color(0xffc266),warm=new THREE.Color(0xff7a18),dim=new THREE.Color(0x4a3410),c=new THREE.Color();
+            fairyLights.bulbs.forEach((b,i)=>{
+                if(b.t<=fairyProgress){const shimmer=0.85+0.15*Math.sin(et*4+i*0.6);c.copy(lit).lerp(warm,0.5+0.5*Math.sin(i*0.9)).multiplyScalar(shimmer);}
+                else if(b.t<fairyProgress+0.06){c.copy(lit).lerp(dim,(b.t-fairyProgress)/0.06);}
+                else c.copy(dim);
+                fairyLights.mesh.setColorAt(i,c);
+            });
+            fairyLights.mesh.instanceColor.needsUpdate=true;
+        }
 
         class Particle {
             constructor(m,t,d=false){this.mesh=m;this.type=t;this.isDust=d;this.posTree=new THREE.Vector3();this.posScatter=new THREE.Vector3();this.baseScale=m.scale.x;this.photoId=null;const s=(t==='PHOTO')?0.3:2.0;this.spinSpeed=new THREE.Vector3((Math.random()-0.5)*s,(Math.random()-0.5)*s,(Math.random()-0.5)*s);this.calcPos();}
@@ -499,6 +526,7 @@
             mainGroup.rotation.y=STATE.rotation.y;mainGroup.rotation.x=STATE.rotation.x;
             if(topStar){topStar.rotation.y=-STATE.rotation.y;topStar.rotation.x=-STATE.rotation.x;topStar.rotation.z=Math.sin(clock.elapsedTime*0.8)*0.08;}
             particleSystem.forEach(p=>p.update(dt,STATE.mode,STATE.focusTarget));
+            updateFairyLights(dt,et);
             composer.render();
         }
         init();
