@@ -372,19 +372,24 @@
             update(dt,mode,ft){
                 let tg=this.posTree; if(mode==='SCATTER')tg=this.posScatter; else if(mode==='FOCUS'){if(this.mesh===ft){let off=new THREE.Vector3(0,1,38);if(STATE.focusType===1)off.set(-4,2,35);else if(STATE.focusType===2)off.set(3,0,32);else if(STATE.focusType===3)off.set(0,-2.5,30);const im=new THREE.Matrix4().copy(mainGroup.matrixWorld).invert();tg=off.applyMatrix4(im);}else tg=this.posScatter;}
                 const ls=(mode==='FOCUS'&&this.mesh===ft)?8.0:4.0; this.mesh.position.lerp(tg,ls*dt);
-                if(mode==='SCATTER'){this.mesh.rotation.x+=this.spinSpeed.x*dt;this.mesh.rotation.y+=this.spinSpeed.y*dt;this.mesh.rotation.z+=this.spinSpeed.z*dt;}else if(mode==='TREE'){this.mesh.rotation.x=THREE.MathUtils.lerp(this.mesh.rotation.x,0,dt);this.mesh.rotation.z=THREE.MathUtils.lerp(this.mesh.rotation.z,0,dt);this.mesh.rotation.y+=0.5*dt;}
+                if(mode==='SCATTER'){this.mesh.rotation.x+=this.spinSpeed.x*dt;this.mesh.rotation.y+=this.spinSpeed.y*dt;this.mesh.rotation.z+=this.spinSpeed.z*dt;}else if(mode==='TREE'){this.mesh.rotation.x=THREE.MathUtils.lerp(this.mesh.rotation.x,0,dt);this.mesh.rotation.z=THREE.MathUtils.lerp(this.mesh.rotation.z,0,dt);if(this.type==='STAR_GREEN'||this.type==='STAR_GOLD')this.mesh.rotation.y=THREE.MathUtils.lerp(this.mesh.rotation.y,0,3*dt);else this.mesh.rotation.y+=0.5*dt;}
                 if(mode==='FOCUS'&&this.mesh===ft){this.mesh.lookAt(camera.position);if(STATE.focusType===1)this.mesh.rotateZ(0.38);if(STATE.focusType===2)this.mesh.rotateZ(-0.15);if(STATE.focusType===3)this.mesh.rotateX(-0.4);}
                 let s=this.baseScale;if(this.isDust){s=this.baseScale*(0.8+0.4*Math.sin(clock.elapsedTime*4+this.mesh.id));if(mode==='TREE')s=0;}else if(mode==='SCATTER'&&this.type==='PHOTO')s=this.baseScale*2.5;else if(mode==='FOCUS'){if(this.mesh===ft){if(STATE.focusType===2)s=3.5;else if(STATE.focusType===3)s=4.8;else s=3.0;}else s=this.baseScale*0.8;}this.mesh.scale.lerp(new THREE.Vector3(s,s,s),6*dt);
             }
         }
 
+        function createStarGeometry(outer=0.55,inner=0.24,depth=0.16){
+            const s=new THREE.Shape();
+            for(let i=0;i<10;i++){const r=(i%2===0)?outer:inner;const a=-Math.PI/2+i*Math.PI/5;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)s.moveTo(x,y);else s.lineTo(x,y);}
+            s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false,steps:1});g.center();return g;
+        }
         function createParticles() {
-            const sg=new THREE.SphereGeometry(0.5,32,32); const bg=new THREE.BoxGeometry(0.55,0.55,0.55); const c=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.3,0),new THREE.Vector3(0.1,0.5,0),new THREE.Vector3(0.3,0.4,0)]); const cg=new THREE.TubeGeometry(c,16,0.08,8,false);
+            const sg=new THREE.SphereGeometry(0.5,32,32); const bg=createStarGeometry(); const c=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.3,0),new THREE.Vector3(0.1,0.5,0),new THREE.Vector3(0.3,0.4,0)]); const cg=new THREE.TubeGeometry(c,16,0.08,8,false);
             const gm=new THREE.MeshStandardMaterial({color:CONFIG.colors.champagneGold,metalness:1,roughness:0.1,envMapIntensity:2,emissive:0x443300,emissiveIntensity:0.3});
-            const grm=new THREE.MeshStandardMaterial({color:CONFIG.colors.deepGreen,metalness:0.2,roughness:0.8,emissive:0x002200,emissiveIntensity:0.2});
+            const grm=new THREE.MeshStandardMaterial({color:0x1f9d55,metalness:0.2,roughness:0.8,emissive:0x0a5a2a,emissiveIntensity:0.5});
             const rm=new THREE.MeshPhysicalMaterial({color:CONFIG.colors.accentRed,metalness:0.3,roughness:0.2,clearcoat:1,emissive:0x330000});
             const cm=new THREE.MeshStandardMaterial({map:caneTexture,roughness:0.4});
-            for(let i=0;i<CONFIG.particles.count;i++){const r=Math.random();let m,t;if(r<0.4){m=new THREE.Mesh(bg,grm);t='BOX';}else if(r<0.7){m=new THREE.Mesh(bg,gm);t='GOLD_BOX';}else if(r<0.92){m=new THREE.Mesh(sg,gm);t='GOLD_SPHERE';}else if(r<0.97){m=new THREE.Mesh(sg,rm);t='RED';}else{m=new THREE.Mesh(cg,cm);t='CANE';}const s=0.4+Math.random()*0.5;m.scale.set(s,s,s);m.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);mainGroup.add(m);particleSystem.push(new Particle(m,t,false));}
+            for(let i=0;i<CONFIG.particles.count;i++){const r=Math.random();let m,t;if(r<0.4){m=new THREE.Mesh(bg,grm);t='STAR_GREEN';}else if(r<0.7){m=new THREE.Mesh(bg,gm);t='STAR_GOLD';}else if(r<0.92){m=new THREE.Mesh(sg,gm);t='GOLD_SPHERE';}else if(r<0.97){m=new THREE.Mesh(sg,rm);t='RED';}else{m=new THREE.Mesh(cg,cm);t='CANE';}const s=0.4+Math.random()*0.5;m.scale.set(s,s,s);if(t==='STAR_GREEN'||t==='STAR_GOLD')m.rotation.set(0,0,Math.random()*Math.PI*2);else m.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);mainGroup.add(m);particleSystem.push(new Particle(m,t,false));}
             const st=new THREE.Mesh(new THREE.OctahedronGeometry(1.2,0),new THREE.MeshStandardMaterial({color:0xffdd88,emissive:0xffaa00,emissiveIntensity:1,metalness:1,roughness:0}));st.position.set(0,CONFIG.particles.treeHeight/2+1.2,0);mainGroup.add(st);mainGroup.add(photoMeshGroup);
         }
         function createDust(){const g=new THREE.TetrahedronGeometry(0.08,0);const m=new THREE.MeshBasicMaterial({color:0xffeebb,transparent:true,opacity:0.8});for(let i=0;i<CONFIG.particles.dustCount;i++){const ms=new THREE.Mesh(g,m);ms.scale.setScalar(0.5+Math.random());mainGroup.add(ms);particleSystem.push(new Particle(ms,'DUST',true));}}
