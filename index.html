@@ -83,7 +83,7 @@
         input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 16px; cursor: pointer; padding: 0; background: none; }
 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        #title-container { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: auto; cursor: move; z-index: 50; transition: color 0.2s; user-select: none; padding: 10px; }
+        #title-container { position: absolute; top: 2%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: auto; cursor: move; z-index: 50; transition: color 0.2s; user-select: none; padding: 10px; }
         .title-line { margin: 0; transition: all 0.2s ease; white-space: nowrap; color: #fceea7; text-shadow: 0 0 30px rgba(255, 255, 255, 0.2); }
         .top-left-panel { pointer-events: auto; display: flex; flex-direction: column; gap: 4px; padding: 10px; width: 100%; box-sizing: border-box; }
         .interaction-grid { display: flex; gap: 4px; margin-bottom: 4px; }
@@ -193,6 +193,7 @@
 
         const STATE = { mode: 'TREE', focusTarget: null, focusType: 0, hand: { detected: false, x: 0, y: 0 }, rotation: { x: 0, y: 0 }, uiVisible: true, cameraVisible: true };
         let manualRotateState = { x: 0, y: 0 };
+        let topStar = null;
         const FONT_STYLES = { 'style1': { font: "'Ma Shan Zheng', cursive", spacing: "4px", shadow: "2px 2px 8px rgba(180,50,50,0.8)", transform: "none" }, 'style2': { font: "'Cinzel', serif", spacing: "6px", shadow: "0 0 20px rgba(255,215,0,0.5)", transform: "none" }, 'style3': { font: "'Great Vibes', cursive", spacing: "1px", shadow: "0 0 15px rgba(255,200,255,0.7)", transform: "none" }, 'style4': { font: "'Monoton', cursive", spacing: "1px", shadow: "0 0 10px #fff", transform: "none" }, 'style5': { font: "'Abril Fatface', cursive", spacing: "0px", shadow: "0 5px 15px rgba(0,0,0,0.8)", transform: "none" } };
 
         let db;
@@ -378,10 +379,10 @@
             }
         }
 
-        function createStarGeometry(outer=0.55,inner=0.24,depth=0.16){
+        function createStarGeometry(outer=0.55,inner=0.24,depth=0.16,bevel=false){
             const s=new THREE.Shape();
             for(let i=0;i<10;i++){const r=(i%2===0)?outer:inner;const a=-Math.PI/2+i*Math.PI/5;const x=Math.cos(a)*r,y=Math.sin(a)*r;if(i===0)s.moveTo(x,y);else s.lineTo(x,y);}
-            s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false,steps:1});g.center();return g;
+            s.closePath();const g=new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:bevel,bevelThickness:0.08,bevelSize:0.08,bevelSegments:2,steps:1});g.center();return g;
         }
         function createParticles() {
             const sg=new THREE.SphereGeometry(0.5,32,32); const bg=createStarGeometry(); const c=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.3,0),new THREE.Vector3(0.1,0.5,0),new THREE.Vector3(0.3,0.4,0)]); const cg=new THREE.TubeGeometry(c,16,0.08,8,false);
@@ -390,7 +391,7 @@
             const rm=new THREE.MeshPhysicalMaterial({color:CONFIG.colors.accentRed,metalness:0.3,roughness:0.2,clearcoat:1,emissive:0x330000});
             const cm=new THREE.MeshStandardMaterial({map:caneTexture,roughness:0.4});
             for(let i=0;i<CONFIG.particles.count;i++){const r=Math.random();let m,t;if(r<0.4){m=new THREE.Mesh(bg,grm);t='STAR_GREEN';}else if(r<0.7){m=new THREE.Mesh(bg,gm);t='STAR_GOLD';}else if(r<0.92){m=new THREE.Mesh(sg,gm);t='GOLD_SPHERE';}else if(r<0.97){m=new THREE.Mesh(sg,rm);t='RED';}else{m=new THREE.Mesh(cg,cm);t='CANE';}const s=0.4+Math.random()*0.5;m.scale.set(s,s,s);if(t==='STAR_GREEN'||t==='STAR_GOLD')m.rotation.set(0,0,Math.random()*Math.PI*2);else m.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);mainGroup.add(m);particleSystem.push(new Particle(m,t,false));}
-            const st=new THREE.Mesh(new THREE.OctahedronGeometry(1.2,0),new THREE.MeshStandardMaterial({color:0xffdd88,emissive:0xffaa00,emissiveIntensity:1,metalness:1,roughness:0}));st.position.set(0,CONFIG.particles.treeHeight/2+1.2,0);mainGroup.add(st);mainGroup.add(photoMeshGroup);
+            topStar=new THREE.Mesh(createStarGeometry(1.7,0.72,0.3,true),new THREE.MeshStandardMaterial({color:0xffe9a8,emissive:0xffb300,emissiveIntensity:1.4,metalness:0.9,roughness:0.15}));topStar.position.set(0,CONFIG.particles.treeHeight/2+1.7,0);mainGroup.add(topStar);mainGroup.add(photoMeshGroup);
         }
         function createDust(){const g=new THREE.TetrahedronGeometry(0.08,0);const m=new THREE.MeshBasicMaterial({color:0xffeebb,transparent:true,opacity:0.8});for(let i=0;i<CONFIG.particles.dustCount;i++){const ms=new THREE.Mesh(g,m);ms.scale.setScalar(0.5+Math.random());mainGroup.add(ms);particleSystem.push(new Particle(ms,'DUST',true));}}
         function createDefaultPhotos(){const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');x.fillStyle='#050505';x.fillRect(0,0,512,512);x.strokeStyle='#eebb66';x.lineWidth=15;x.strokeRect(20,20,472,472);x.font='500 60px Times New Roman';x.fillStyle='#eebb66';x.textAlign='center';x.fillText("JOYEUX",256,230);x.fillText("NOEL",256,300);createPhotoTexture(c.toDataURL(),'default');}
@@ -456,6 +457,7 @@
             else{if(STATE.mode==='TREE'){STATE.rotation.y+=0.3*dt;STATE.rotation.x+=(0-STATE.rotation.x)*2.0*dt;}else STATE.rotation.y+=0.1*dt;}
             
             mainGroup.rotation.y=STATE.rotation.y;mainGroup.rotation.x=STATE.rotation.x;
+            if(topStar){topStar.rotation.y=-STATE.rotation.y;topStar.rotation.x=-STATE.rotation.x;topStar.rotation.z=Math.sin(clock.elapsedTime*0.8)*0.08;}
             particleSystem.forEach(p=>p.update(dt,STATE.mode,STATE.focusTarget));
             composer.render();
         }
