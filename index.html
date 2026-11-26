@@ -11,11 +11,11 @@
         
         /* ================= 2. UI 视觉 (V17.6.3 原版样式) ================= */
         :root {
-            --glass-bg: rgba(20, 20, 25, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-highlight: rgba(255, 255, 255, 0.15);
+            --glass-bg: rgba(18, 18, 22, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-highlight: rgba(255, 255, 255, 0.16);
             --accent-gold: #d4af37;
-            --accent-gold-gradient: linear-gradient(135deg, #fceea7 0%, #d4af37 100%);
+            --accent-gold-gradient: linear-gradient(135deg, #fff1c1 0%, #d4af37 100%);
             --text-main: #ffffff;
             --text-sub: #b0b0b5;
             --panel-width: 210px;
@@ -83,7 +83,7 @@
         input[type="color"] { -webkit-appearance: none; border: none; width: 100%; height: 16px; cursor: pointer; padding: 0; background: none; }
 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        #title-container { position: absolute; top: 2%; left: 50%; transform: translateX(-50%); text-align: center; pointer-events: auto; cursor: move; z-index: 50; transition: color 0.2s; user-select: none; padding: 10px; }
+        #title-container { position: absolute; top: 32%; left: 18%; transform: translateY(-50%); text-align: left; pointer-events: auto; cursor: move; z-index: 50; transition: color 0.2s; user-select: none; padding: 10px; }
         .title-line { margin: 0; transition: all 0.2s ease; white-space: nowrap; color: #fceea7; text-shadow: 0 0 30px rgba(255, 255, 255, 0.2); }
         .top-left-panel { pointer-events: auto; display: flex; flex-direction: column; gap: 4px; padding: 10px; width: 100%; box-sizing: border-box; }
         .interaction-grid { display: flex; gap: 4px; margin-bottom: 4px; }
@@ -131,10 +131,10 @@
                 <div class="ui-title-sub">祝福语录</div>
                 <div class="control-row"><input type="text" id="input-line1" class="input-glass" placeholder="第一行文字" oninput="updateTextConfig()"><input type="text" id="input-line2" class="input-glass" placeholder="第二行文字" oninput="updateTextConfig()" style="margin-top:2px;"></div>
                 <div class="ui-title-sub">字体风格</div>
-                <select id="font-select" class="input-glass" onchange="updateTextConfig()"><option value="style1">书法韵味</option><option value="style2">古典衬线</option><option value="style3">优雅手写</option><option value="style4">艺术线条</option><option value="style5">复古重磅</option></select>
+                <select id="font-select" class="input-glass" onchange="updateTextConfig()"><option value="style1">书法韵味</option><option value="style2" selected>古典衬线</option><option value="style3">优雅手写</option><option value="style4">艺术线条</option><option value="style5">复古重磅</option></select>
                 <div class="control-row">
                     <div class="ui-title-sub" style="margin-top:6px;">大小 & 颜色</div>
-                    <div style="display:flex; gap:8px; align-items:center;"><input type="range" min="50" max="250" value="100" id="slider-fontsize" oninput="updateTextConfig()"><input type="color" id="color-picker" value="#fceea7" oninput="updateTextConfig()" style="width:30px; height:20px; border:none;"></div>
+                    <div style="display:flex; gap:8px; align-items:center;"><input type="range" min="30" max="250" value="60" id="slider-fontsize" oninput="updateTextConfig()"><input type="color" id="color-picker" value="#ffe9a8" oninput="updateTextConfig()" style="width:30px; height:20px; border:none;"></div>
                 </div>
                 <div class="ui-title-sub" style="border-top:1px solid rgba(255,255,255,0.05); padding-top:6px; margin-top:6px;">背景音乐</div>
                 <div style="display:flex; gap:8px; margin-bottom:4px;"><button class="elegant-btn" onclick="toggleMusicPlay()" id="play-btn" style="flex:2; font-size:14px;">⏯</button><button class="elegant-btn" onclick="replayMusic()" style="flex:1; font-size:14px;">⟲</button></div>
@@ -184,10 +184,10 @@
         const EXPORTED_DATA = null;
 
         let CONFIG = {
-            colors: { bg: 0x000000, champagneGold: 0xffd966, deepGreen: 0x03180a, accentRed: 0x990000 },
+            colors: { bg: 0x050505, champagneGold: 0xffd966, deepGreen: 0x0b6b3a, accentRed: 0xc62828 },
             particles: { count: 1500, dustCount: 2500, treeHeight: 24, treeRadius: 8 },
             snow: { count: 1500, range: 70, speed: 3.5, sizeBase: 0.12, sizeVar: 0.1 }, 
-            camera: { z: 50 },
+            camera: { z: 56 },
             interaction: { rotationSpeed: 1.4, grabRadius: 0.25 }
         };
 
@@ -206,7 +206,7 @@
         function loadMusicFromDB(){if(EXPORTED_DATA && EXPORTED_DATA.music) return Promise.resolve(dataURLtoBlob(EXPORTED_DATA.music)); if(!db)return Promise.resolve(null);return new Promise(r=>{db.transaction('music',"readonly").objectStore('music').get('bgm').onsuccess=e=>r(e.target.result?e.target.result.data:null)});}
         function dataURLtoBlob(dataurl) { var arr = dataurl.split(','), mime = arr[0].match(/:(.*?);/)[1], bstr = atob(arr[1]), n = bstr.length, u8arr = new Uint8Array(n); while(n--){ u8arr[n] = bstr.charCodeAt(n); } return new Blob([u8arr], {type:mime}); }
 
-        let scene, camera, renderer, composer, mainGroup, particleSystem=[], photoMeshGroup=new THREE.Group(), snowInstancedMesh, snowDummy=new THREE.Object3D(), snowData=[], clock=new THREE.Clock(), handLandmarker, videoElement, caneTexture, bgmAudio=new Audio(); bgmAudio.loop=true; let isMusicPlaying=false;
+        let scene, camera, renderer, composer, mainGroup, particleSystem=[], photoMeshGroup=new THREE.Group(), snowInstancedMesh, snowDummy=new THREE.Object3D(), snowData=[], clock=new THREE.Clock(), handLandmarker, videoElement, caneTexture, glowTexture, ringSystem, ringData=[], ringDummy=new THREE.Object3D(), bokehGroup, bokehData=[], bgmAudio=new Audio(); bgmAudio.loop=true; let isMusicPlaying=false;
 
         async function init() {
             if (EXPORTED_DATA) {
@@ -215,7 +215,7 @@
                 setTimeout(() => applyTextConfig(EXPORTED_DATA.text.fontKey, EXPORTED_DATA.text.line1, EXPORTED_DATA.text.line2, EXPORTED_DATA.text.size, EXPORTED_DATA.text.color), 100);
             }
 
-            initThree(); setupEnvironment(); setupLights(); createTextures(); createParticles(); createDust(); createSnow(); createDefaultPhotos(); setupPostProcessing(); setupEvents(); animate();
+            initThree(); setupEnvironment(); setupLights(); createTextures(); createParticles(); createDust(); createSnow(); createRings(); createBokeh(); createDefaultPhotos(); setupPostProcessing(); setupEvents(); animate();
             
             const loader = document.getElementById('loader');
             if(loader) { loader.style.opacity = 0; setTimeout(() => loader.remove(), 500); }
@@ -241,8 +241,8 @@
         window.toggleUI=()=> { STATE.uiVisible=!STATE.uiVisible; document.getElementById('left-sidebar').classList.toggle('panel-hidden', !STATE.uiVisible); document.querySelector('.bottom-left-panel').classList.toggle('panel-hidden', !STATE.uiVisible); };
         window.toggleCameraDisplay=()=> { STATE.cameraVisible=!STATE.cameraVisible; document.getElementById('webcam-wrapper').classList.toggle('camera-hidden', !STATE.cameraVisible); };
         window.toggleFullScreen=()=> { if(!document.fullscreenElement)document.documentElement.requestFullscreen();else document.exitFullscreen(); };
-        function loadTextConfig() { const s=JSON.parse(localStorage.getItem('v16_text_config')); if(s){ document.getElementById('input-line1').value=s.line1||""; document.getElementById('input-line2').value=s.line2||""; document.getElementById('font-select').value=s.fontKey||"style1"; document.getElementById('slider-fontsize').value=s.size||100; document.getElementById('color-picker').value=s.color||"#fceea7"; applyTextConfig(s.fontKey,s.line1,s.line2,s.size,s.color); } else { document.getElementById('input-line1').value="Merry"; document.getElementById('input-line2').value="Christmas"; applyTextConfig("style1","Merry","Christmas",100,"#fceea7"); } }
-        window.updateTextConfig=()=> { const k=document.getElementById('font-select').value, l1=document.getElementById('input-line1').value, l2=document.getElementById('input-line2').value, s=document.getElementById('slider-fontsize').value, c=document.getElementById('color-picker').value; localStorage.setItem('v16_text_config',JSON.stringify({fontKey:k,line1:l1,line2:l2,size:s,color:c})); applyTextConfig(k,l1,l2,s,c); };
+        function loadTextConfig() { const s=JSON.parse(localStorage.getItem('v17_atmosphere_text')); if(s){ document.getElementById('input-line1').value=s.line1||""; document.getElementById('input-line2').value=s.line2||""; document.getElementById('font-select').value=s.fontKey||"style1"; document.getElementById('slider-fontsize').value=s.size||100; document.getElementById('color-picker').value=s.color||"#fceea7"; applyTextConfig(s.fontKey,s.line1,s.line2,s.size,s.color); } else { document.getElementById('input-line1').value="Merry"; document.getElementById('input-line2').value="Christmas"; applyTextConfig("style2","Merry","Christmas",60,"#ffe9a8"); } }
+        window.updateTextConfig=()=> { const k=document.getElementById('font-select').value, l1=document.getElementById('input-line1').value, l2=document.getElementById('input-line2').value, s=document.getElementById('slider-fontsize').value, c=document.getElementById('color-picker').value; localStorage.setItem('v17_atmosphere_text',JSON.stringify({fontKey:k,line1:l1,line2:l2,size:s,color:c})); applyTextConfig(k,l1,l2,s,c); };
         function applyTextConfig(k,l1,l2,s,c) { const st=FONT_STYLES[k]||FONT_STYLES['style1']; const t1=document.getElementById('display-line1'), t2=document.getElementById('display-line2'), ct=document.getElementById('title-container'); ct.style.fontFamily=st.font; t1.innerText=l1; t2.innerText=l2; t1.style.letterSpacing=st.spacing; t2.style.letterSpacing=st.spacing; t1.style.textShadow=st.shadow; t2.style.textShadow=st.shadow; t1.style.textTransform=st.transform; t2.style.textTransform=st.transform; t1.style.color=c; t2.style.color=c; t1.style.fontSize=(0.48*s)+"px"; t2.style.fontSize=(0.48*s)+"px"; }
         
         window.toggleMusicPlay=()=> { if(!bgmAudio.src) return alert("请先上传音乐"); if(isMusicPlaying){ bgmAudio.pause(); isMusicPlaying=false; } else { bgmAudio.play(); isMusicPlaying=true; } updatePlayBtnUI(isMusicPlaying); };
@@ -344,11 +344,14 @@
             });
         }
 
-        function initThree() { const c=document.getElementById('canvas-container'); scene=new THREE.Scene(); scene.background=new THREE.Color(CONFIG.colors.bg); scene.fog=new THREE.FogExp2(CONFIG.colors.bg,0.01); camera=new THREE.PerspectiveCamera(42,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(0,2,CONFIG.camera.z); renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"}); renderer.setSize(window.innerWidth,window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.toneMapping=THREE.ReinhardToneMapping; renderer.toneMappingExposure=2.2; c.appendChild(renderer.domElement); mainGroup=new THREE.Group(); scene.add(mainGroup); }
+        function initThree() { const c=document.getElementById('canvas-container'); scene=new THREE.Scene(); scene.background=new THREE.Color(CONFIG.colors.bg); scene.fog=new THREE.FogExp2(CONFIG.colors.bg,0.01); camera=new THREE.PerspectiveCamera(42,window.innerWidth/window.innerHeight,0.1,1000); camera.position.set(0,14,CONFIG.camera.z);camera.lookAt(0,-2,0); renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,powerPreference:"high-performance"}); renderer.setSize(window.innerWidth,window.innerHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.toneMapping=THREE.ReinhardToneMapping; renderer.toneMappingExposure=2.2; c.appendChild(renderer.domElement); mainGroup=new THREE.Group(); scene.add(mainGroup); }
         function setupEnvironment() { const p=new THREE.PMREMGenerator(renderer); scene.environment=p.fromScene(new RoomEnvironment(),0.04).texture; }
-        function setupLights() { scene.add(new THREE.AmbientLight(0xffffff,0.6)); const i=new THREE.PointLight(0xffaa00,2,20); i.position.set(0,5,0); mainGroup.add(i); const s1=new THREE.SpotLight(0xffcc66,1200); s1.position.set(30,40,40); s1.angle=0.5; s1.penumbra=0.5; scene.add(s1); const s2=new THREE.SpotLight(0x6688ff,600); s2.position.set(-30,20,-30); scene.add(s2); const f=new THREE.DirectionalLight(0xffeebb,0.8); f.position.set(0,0,50); scene.add(f); }
-        function setupPostProcessing() { const r=new RenderPass(scene,camera); const b=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.5,0.4,0.85); b.threshold=0.7; b.strength=0.45; b.radius=0.4; composer=new EffectComposer(renderer); composer.addPass(r); composer.addPass(b); }
-        function createTextures() { const c=document.createElement('canvas'); c.width=128; c.height=128; const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,128,128); x.fillStyle='#880000'; x.beginPath(); for(let i=-128;i<256;i+=32){x.moveTo(i,0);x.lineTo(i+32,128);x.lineTo(i+16,128);x.lineTo(i-16,0);} x.fill(); caneTexture=new THREE.CanvasTexture(c); caneTexture.wrapS=caneTexture.wrapT=THREE.RepeatWrapping; caneTexture.repeat.set(3,3); }
+        function setupLights() { scene.add(new THREE.AmbientLight(0xffffff,0.65)); const i=new THREE.PointLight(0xffaa00,2.4,26); i.position.set(0,4,0); mainGroup.add(i); const s1=new THREE.SpotLight(0xffd966,1300); s1.position.set(30,40,40); s1.angle=0.5; s1.penumbra=0.5; scene.add(s1); const s2=new THREE.SpotLight(0x4488ff,700); s2.position.set(-30,20,-30); scene.add(s2); const f=new THREE.DirectionalLight(0xffeebb,0.8); f.position.set(0,0,50); scene.add(f); }
+        function setupPostProcessing() { const r=new RenderPass(scene,camera); const b=new UnrealBloomPass(new THREE.Vector2(window.innerWidth,window.innerHeight),1.5,0.4,0.85); b.threshold=0.7; b.strength=0.55; b.radius=0.5; composer=new EffectComposer(renderer); composer.addPass(r); composer.addPass(b); }
+        function createTextures() {
+            const c=document.createElement('canvas'); c.width=128; c.height=128; const x=c.getContext('2d'); x.fillStyle='#ffffff'; x.fillRect(0,0,128,128); x.fillStyle='#7a2a8f'; x.beginPath(); for(let i=-128;i<256;i+=32){x.moveTo(i,0);x.lineTo(i+32,128);x.lineTo(i+16,128);x.lineTo(i-16,0);} x.fill(); caneTexture=new THREE.CanvasTexture(c); caneTexture.wrapS=caneTexture.wrapT=THREE.RepeatWrapping; caneTexture.repeat.set(3,3);
+            const gc=document.createElement('canvas'); gc.width=128; gc.height=128; const gx=gc.getContext('2d'); const grd=gx.createRadialGradient(64,64,0,64,64,64); grd.addColorStop(0,'rgba(255,255,255,1)'); grd.addColorStop(0.25,'rgba(255,230,160,0.75)'); grd.addColorStop(0.6,'rgba(255,180,60,0.22)'); grd.addColorStop(1,'rgba(255,120,0,0)'); gx.fillStyle=grd; gx.fillRect(0,0,128,128); glowTexture=new THREE.CanvasTexture(gc);
+        }
 
         window.updateSnowSettings=()=> { CONFIG.snow.sizeBase=parseFloat(document.getElementById('slider-snow-size').value); CONFIG.snow.count=parseInt(document.getElementById('slider-snow-count').value); createSnow(); };
         window.updateSnowSpeed=(v)=> { CONFIG.snow.speed=parseFloat(v); };
@@ -362,7 +365,7 @@
             if(snowInstancedMesh){scene.remove(snowInstancedMesh); snowInstancedMesh.geometry.dispose(); snowInstancedMesh.material.dispose(); snowInstancedMesh=null; snowData=[];}
             if(CONFIG.snow.count<=0)return;
             const g=createSnowflakeGeometry(CONFIG.snow.sizeBase*2.2);
-            const m=new THREE.MeshBasicMaterial({color:0xcfe9ff,transparent:true,opacity:0.85,side:THREE.DoubleSide,depthWrite:false});
+            const m=new THREE.MeshBasicMaterial({color:0xfff4d6,transparent:true,opacity:0.8,side:THREE.DoubleSide,depthWrite:false});
             snowInstancedMesh=new THREE.InstancedMesh(g,m,CONFIG.snow.count); snowInstancedMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
             for(let i=0;i<CONFIG.snow.count;i++){
                 snowDummy.position.set((Math.random()-0.5)*CONFIG.snow.range, Math.random()*CONFIG.snow.range, (Math.random()-0.5)*CONFIG.snow.range);
@@ -372,6 +375,24 @@
                 snowData.push({vy:(Math.random()*0.5+0.8), rx:(Math.random()-0.5)*2, ry:(Math.random()-0.5)*2, rz:(Math.random()-0.5)*2});
             } scene.add(snowInstancedMesh);
         }
+        function createRings(){
+            if(ringSystem){scene.remove(ringSystem);ringSystem.geometry.dispose();ringSystem.material.dispose();ringSystem=null;ringData=[];}
+            const count=1600;const g=new THREE.SphereGeometry(0.075,6,6);const m=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:1,depthWrite:false});
+            ringSystem=new THREE.InstancedMesh(g,m,count);ringSystem.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+            const ca=new THREE.Color(0xffd966),cb=new THREE.Color(0xc62828),baseY=-CONFIG.particles.treeHeight/2;
+            for(let i=0;i<count;i++){const band=Math.floor(i/200);const r=5.5+band*2.4+Math.random()*0.6;ringData.push({r,a:Math.random()*Math.PI*2,y:baseY+Math.random()*0.5,speed:(0.05+Math.random()*0.09)*(band%2?-1:1),bob:Math.random()*Math.PI*2});ringSystem.setColorAt(i,ca.clone().lerp(cb,Math.random()));}
+            scene.add(ringSystem);
+        }
+        function createBokeh(){
+            if(bokehGroup){scene.remove(bokehGroup);bokehGroup=null;bokehData=[];}
+            bokehGroup=new THREE.Group();
+            for(let i=0;i<28;i++){
+                const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:i%3===0?0xffd966:0xffffff,transparent:true,opacity:0.08+Math.random()*0.14,depthWrite:false,blending:THREE.AdditiveBlending}));
+                const s=0.6+Math.random()*2.0;sp.scale.set(s,s,1);sp.position.set((Math.random()-0.5)*60,(Math.random()-0.5)*34,(Math.random()-0.5)*24-6);
+                bokehData.push({vy:0.15+Math.random()*0.35,vx:(Math.random()-0.5)*0.2});bokehGroup.add(sp);
+            }
+            scene.add(bokehGroup);
+        }
 
         class Particle {
             constructor(m,t,d=false){this.mesh=m;this.type=t;this.isDust=d;this.posTree=new THREE.Vector3();this.posScatter=new THREE.Vector3();this.baseScale=m.scale.x;this.photoId=null;const s=(t==='PHOTO')?0.3:2.0;this.spinSpeed=new THREE.Vector3((Math.random()-0.5)*s,(Math.random()-0.5)*s,(Math.random()-0.5)*s);this.calcPos();}
@@ -379,7 +400,7 @@
             update(dt,mode,ft){
                 let tg=this.posTree; if(mode==='SCATTER')tg=this.posScatter; else if(mode==='FOCUS'){if(this.mesh===ft){let off=new THREE.Vector3(0,1,38);if(STATE.focusType===1)off.set(-4,2,35);else if(STATE.focusType===2)off.set(3,0,32);else if(STATE.focusType===3)off.set(0,-2.5,30);const im=new THREE.Matrix4().copy(mainGroup.matrixWorld).invert();tg=off.applyMatrix4(im);}else tg=this.posScatter;}
                 const ls=(mode==='FOCUS'&&this.mesh===ft)?8.0:4.0; this.mesh.position.lerp(tg,ls*dt);
-                if(mode==='SCATTER'){this.mesh.rotation.x+=this.spinSpeed.x*dt;this.mesh.rotation.y+=this.spinSpeed.y*dt;this.mesh.rotation.z+=this.spinSpeed.z*dt;}else if(mode==='TREE'){this.mesh.rotation.x=THREE.MathUtils.lerp(this.mesh.rotation.x,0,dt);this.mesh.rotation.z=THREE.MathUtils.lerp(this.mesh.rotation.z,0,dt);if(this.type==='STAR_GREEN'||this.type==='STAR_GOLD')this.mesh.rotation.y=THREE.MathUtils.lerp(this.mesh.rotation.y,0,3*dt);else this.mesh.rotation.y+=0.5*dt;}
+                if(mode==='SCATTER'){this.mesh.rotation.x+=this.spinSpeed.x*dt;this.mesh.rotation.y+=this.spinSpeed.y*dt;this.mesh.rotation.z+=this.spinSpeed.z*dt;}else if(mode==='TREE'){if(this.type==='STAR_GREEN'||this.type==='STAR_GOLD'){this.mesh.rotation.x=-STATE.rotation.x;this.mesh.rotation.y=-STATE.rotation.y;this.mesh.rotation.z=THREE.MathUtils.lerp(this.mesh.rotation.z,0,3*dt);}else{this.mesh.rotation.x=THREE.MathUtils.lerp(this.mesh.rotation.x,0,dt);this.mesh.rotation.z=THREE.MathUtils.lerp(this.mesh.rotation.z,0,dt);this.mesh.rotation.y+=0.5*dt;}}
                 if(mode==='FOCUS'&&this.mesh===ft){this.mesh.lookAt(camera.position);if(STATE.focusType===1)this.mesh.rotateZ(0.38);if(STATE.focusType===2)this.mesh.rotateZ(-0.15);if(STATE.focusType===3)this.mesh.rotateX(-0.4);}
                 let s=this.baseScale;if(this.isDust){s=this.baseScale*(0.8+0.4*Math.sin(clock.elapsedTime*4+this.mesh.id));if(mode==='TREE')s=0;}else if(mode==='SCATTER'&&this.type==='PHOTO')s=this.baseScale*2.5;else if(mode==='FOCUS'){if(this.mesh===ft){if(STATE.focusType===2)s=3.5;else if(STATE.focusType===3)s=4.8;else s=3.0;}else s=this.baseScale*0.8;}this.mesh.scale.lerp(new THREE.Vector3(s,s,s),6*dt);
             }
@@ -392,12 +413,14 @@
         }
         function createParticles() {
             const sg=new THREE.SphereGeometry(0.5,32,32); const bg=createStarGeometry(); const c=new THREE.CatmullRomCurve3([new THREE.Vector3(0,-0.5,0),new THREE.Vector3(0,0.3,0),new THREE.Vector3(0.1,0.5,0),new THREE.Vector3(0.3,0.4,0)]); const cg=new THREE.TubeGeometry(c,16,0.08,8,false);
-            const gm=new THREE.MeshStandardMaterial({color:CONFIG.colors.champagneGold,metalness:1,roughness:0.1,envMapIntensity:2,emissive:0x443300,emissiveIntensity:0.3});
-            const grm=new THREE.MeshStandardMaterial({color:0x1f9d55,metalness:0.2,roughness:0.8,emissive:0x0a5a2a,emissiveIntensity:0.5});
-            const rm=new THREE.MeshPhysicalMaterial({color:CONFIG.colors.accentRed,metalness:0.3,roughness:0.2,clearcoat:1,emissive:0x330000});
+            const gm=new THREE.MeshStandardMaterial({color:CONFIG.colors.champagneGold,metalness:1,roughness:0.1,envMapIntensity:2,emissive:0x6b4a00,emissiveIntensity:0.45});
+            const grm=new THREE.MeshStandardMaterial({color:CONFIG.colors.deepGreen,metalness:0.35,roughness:0.45,emissive:0x0a3a18,emissiveIntensity:0.5});
+            const rm=new THREE.MeshPhysicalMaterial({color:CONFIG.colors.accentRed,metalness:0.3,roughness:0.2,clearcoat:1,emissive:0x5a0a0a,emissiveIntensity:0.45});
             const cm=new THREE.MeshStandardMaterial({map:caneTexture,roughness:0.4});
             for(let i=0;i<CONFIG.particles.count;i++){const r=Math.random();let m,t;if(r<0.4){m=new THREE.Mesh(bg,grm);t='STAR_GREEN';}else if(r<0.7){m=new THREE.Mesh(bg,gm);t='STAR_GOLD';}else if(r<0.92){m=new THREE.Mesh(sg,gm);t='GOLD_SPHERE';}else if(r<0.97){m=new THREE.Mesh(sg,rm);t='RED';}else{m=new THREE.Mesh(cg,cm);t='CANE';}const s=0.4+Math.random()*0.5;m.scale.set(s,s,s);if(t==='STAR_GREEN'||t==='STAR_GOLD')m.rotation.set(0,0,Math.random()*Math.PI*2);else m.rotation.set(Math.random()*6,Math.random()*6,Math.random()*6);mainGroup.add(m);particleSystem.push(new Particle(m,t,false));}
-            topStar=new THREE.Mesh(createStarGeometry(1.7,0.72,0.3,true),new THREE.MeshStandardMaterial({color:0xffe9a8,emissive:0xffb300,emissiveIntensity:1.4,metalness:0.9,roughness:0.15}));topStar.position.set(0,CONFIG.particles.treeHeight/2+1.7,0);mainGroup.add(topStar);mainGroup.add(photoMeshGroup);
+            topStar=new THREE.Mesh(createStarGeometry(1.7,0.72,0.3,true),new THREE.MeshStandardMaterial({color:0xffd966,emissive:0x000000,metalness:0.6,roughness:0.2}));topStar.position.set(0,CONFIG.particles.treeHeight/2+1.7,0);
+            mainGroup.add(topStar);
+            const baseGlow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0xffaa33,transparent:true,opacity:0.45,depthWrite:false,blending:THREE.AdditiveBlending}));baseGlow.scale.set(14,14,1);baseGlow.position.set(0,-CONFIG.particles.treeHeight/2,0);mainGroup.add(baseGlow);mainGroup.add(photoMeshGroup);
         }
         function createDust(){const g=new THREE.TetrahedronGeometry(0.08,0);const m=new THREE.MeshBasicMaterial({color:0xffeebb,transparent:true,opacity:0.8});for(let i=0;i<CONFIG.particles.dustCount;i++){const ms=new THREE.Mesh(g,m);ms.scale.setScalar(0.5+Math.random());mainGroup.add(ms);particleSystem.push(new Particle(ms,'DUST',true));}}
         function createDefaultPhotos(){const c=document.createElement('canvas');c.width=512;c.height=512;const x=c.getContext('2d');x.fillStyle='#050505';x.fillRect(0,0,512,512);x.strokeStyle='#eebb66';x.lineWidth=15;x.strokeRect(20,20,472,472);x.font='500 60px Times New Roman';x.fillStyle='#eebb66';x.textAlign='center';x.fillText("JOYEUX",256,230);x.fillText("NOEL",256,300);createPhotoTexture(c.toDataURL(),'default');}
@@ -456,6 +479,17 @@
                     snowDummy.updateMatrix();snowInstancedMesh.setMatrixAt(i,snowDummy.matrix);
                 } snowInstancedMesh.instanceMatrix.needsUpdate=true;
             } else if(snowInstancedMesh)snowInstancedMesh.visible=false;
+
+            if(ringSystem){
+                for(let i=0;i<ringData.length;i++){
+                    const d=ringData[i];d.a+=d.speed*dt;
+                    const r=d.r+Math.sin(et*0.6+d.bob)*0.25;
+                    ringDummy.position.set(Math.cos(d.a)*r,d.y+Math.sin(et*1.1+d.bob)*0.12,Math.sin(d.a)*r);
+                    ringDummy.scale.setScalar(0.6+0.4*Math.sin(et*1.8+i*0.7));ringDummy.updateMatrix();ringSystem.setMatrixAt(i,ringDummy.matrix);
+                }
+                ringSystem.instanceMatrix.needsUpdate=true;
+            }
+            if(bokehGroup){bokehGroup.children.forEach((sp,i)=>{const d=bokehData[i];sp.position.y+=d.vy*dt;sp.position.x+=d.vx*dt;if(sp.position.y>18)sp.position.y=-18;});}
 
             // Updated Rotation Logic
             if(manualRotateState.x!==0||manualRotateState.y!==0){const s=CONFIG.interaction.rotationSpeed*2.0;STATE.rotation.x+=manualRotateState.x*s*dt;STATE.rotation.y+=manualRotateState.y*s*dt;}
